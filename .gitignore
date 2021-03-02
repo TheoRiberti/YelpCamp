@@ -1,0 +1,15 @@
+ 12 lines (12 sloc) 85 Bytes
+*.diff
+*.err
+*.orig
+*.log
+*.rej
+*.swo
+*.swp
+*.vi
+*~
+*.sass-cache
+node_modules/
+.tmp/
+desktop.ini
+initial-notes.txt
