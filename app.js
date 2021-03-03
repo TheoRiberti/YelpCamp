@@ -4,6 +4,8 @@ const Campground = require("./models/campground");
 const mongoose = require("mongoose");
 //don't forget to npm i method-override
 const methodOverride = require("method-override");
+//ejs-mate is an engine used to parse ejs code
+const ejsMate = require("ejs-mate");
 
 /*-----------------------INITIAL SETUP----------------------*/
 
@@ -21,6 +23,9 @@ db.once("open", () => {
 
 const app = express();
 
+//tells express to use ejs-mate as the engine to parse ejs code
+//instead of the default one
+app.engine("ejs", ejsMate);
 app.set("view engine", "ejs");
 app.set("views", path.join(__dirname, "views"));
 

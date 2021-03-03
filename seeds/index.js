@@ -22,9 +22,15 @@ const seedDB = async () => {
   await Campground.deleteMany({});
   for (let i = 0; i < 50; i++) {
     const random1000 = Math.floor(Math.random() * 1000);
+    const price = Math.floor(Math.random() * 20) + 10;
     const camp = new Campground({
       location: `${cities[random1000].city}, ${cities[random1000].state}`,
       title: `${sample(descriptors)} ${sample(places)}`,
+      //this url is a small api at unsplash that returns a random picture from the specified collection everytime is accessed
+      image: "https://source.unsplash.com/collection/483251",
+      description:
+        "Lorem ipsum dolor sit amet consectetur adipisicing elit. Atque sapiente accusamus molestiae provident accusantium eligendi qui labore magnam, quos, omnis consequatur inventore fugiat exercitationem ipsum earum nam repudiandae necessitatibus? Repudiandae!",
+      price: price,
     });
     await camp.save();
   }
