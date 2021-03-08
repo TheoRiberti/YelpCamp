@@ -4,14 +4,16 @@ const Campground = require("./models/campground");
 const mongoose = require("mongoose");
 //don't forget to npm i method-override
 const methodOverride = require("method-override");
-//ejs-mate is an engine used to parse ejs code, it allows boilerplate usage
+//ejs-mate is an engine used to parse ejs code, it allows boilerplate <usage> </usage>
 const ejsMate = require("ejs-mate");
 //the wrapper helper funcion to catch errors:
 const catchAsync = require("./utils/catchAsync");
 //our customized error class:
 const ExpressError = require("./utils/ExpressError");
-//joi schema validation for using in the validateCamground mdware, destructuring as we plan to have multiple schemas in this file
-const { campgroundSchema } = require("./schemas");
+//joi schema validation for using in the validateCamground mdware,
+const { campgroundSchema, reviewSchema } = require("./schemas");
+//the review model:
+const Review = require("./models/review");
 /*-----------------------INITIAL SETUP----------------------*/
 
 mongoose.connect("mongodb://localhost:27017/yelp-camp", {
@@ -45,6 +47,18 @@ const validateCampground = (req, res, next) => {
   //const result = campgroundSchema.validate(req.body);
   //console.log(result);
   const { error } = campgroundSchema.validate(req.body);
+  if (error) {
+    //details is an array of objects..
+    const msg = error.details.map((el) => el.message).join(",");
+    throw new ExpressError(msg, 400);
+  } else {
+    //it's absolutelly necessary to call next so it passes the request to the next midware
+    next();
+  }
+};
+//defining middleware for validation via joi
+const validateReview = (req, res, next) => {
+  const { error } = reviewSchema.validate(req.body);
   if (error) {
     //details is an array of objects..
     const msg = error.details.map((el) => el.message).join(",");
@@ -88,6 +102,19 @@ app.post(
   })
 );
 
+//remember to leave this one as the last <one className=""></one>
+//rest route: show, details for a specific camp
+app.get(
+  "/campgrounds/:id",
+  catchAsync(async (req, res) => {
+    //uses mangoose to find all items in the collection
+    const { id } = req.params;
+    let campground = await Campground.findById(id).populate("reviews");
+    res.render("campgrounds/show", { campground });
+    console.log(campground);
+  })
+);
+
 //rest route: edit, renders form to edit a camp
 app.get(
   "/campgrounds/:id/edit",
@@ -121,22 +148,38 @@ app.delete(
   })
 );
 
-//remember to leave this one as the last <one className=""></one>
-//rest route: show, details for a specific camp
-app.get(
-  "/campgrounds/:id",
+//route: create a review for a particular campground
+app.post(
+  "/campgrounds/:id/reviews",
+  validateReview,
   catchAsync(async (req, res) => {
-    //uses mangoose to find all items in the collection
     const { id } = req.params;
-    const campground = await Campground.findById(id);
-    res.render("campgrounds/show", { campground });
+    let campground = await Campground.findById(id);
+    const review = new Review(req.body.review);
+    campground.reviews.push(review);
+    await review.save();
+    await campground.save();
+    res.redirect(`/campgrounds/${id}`);
   })
 );
 
+//route: delete a review
+app.delete(
+  "/campgrounds/:id/reviews/:reviewId",
+  catchAsync(async (req, res) => {
+    const { id, reviewId } = req.params;
+    //uses mongoose operator $pull to remove from the array
+    await Campground.findByIdAndUpdate(id, { $pull: { reviews: reviewId } });
+    await Review.findByIdAndDelete(reviewId);
+    res.redirect(`/campgrounds/${id}`);
+  })
+);
 //catches all invalid paths, of course it needs to be at the end
 app.all("*", (req, res, next) => {
   //generating our customized situation:
+  //I don't the reason why this code is running everytime i go to the /campgrounds page, see that later
   next(new ExpressError("Page not found", 404));
+  // console.log("hello");
 });
 
 app.use((err, req, res, next) => {
@@ -144,7 +187,8 @@ app.use((err, req, res, next) => {
   if (!err.message) {
     err.message = "Oh No, Something Went Wrong!";
   } //render error tempalate
-  console.log(statusCode);
+  // console.log(statusCode);
+  // console.log(err);
   res.status(statusCode).render("error", { err });
   //console.dir(err);
 });
