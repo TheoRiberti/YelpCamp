@@ -26,6 +26,7 @@ const seedDB = async () => {
     const camp = new Campground({
       location: `${cities[random1000].city}, ${cities[random1000].state}`,
       title: `${sample(descriptors)} ${sample(places)}`,
+      author: "604a5d4e12153d263454ffaf",
       //this url is a small api at unsplash that returns a random picture from the specified collection everytime is accessed
       image: "https://source.unsplash.com/collection/483251",
       description:
