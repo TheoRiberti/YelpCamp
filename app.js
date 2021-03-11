@@ -11,10 +11,15 @@ const catchAsync = require("./utils/catchAsync");
 const ExpressError = require("./utils/ExpressError");
 //joi schema validation for using in the validateCamground mdware,
 //the review model:
-const campgrounds = require("./routes/campgrounds");
-const reviews = require("./routes/reviews");
+const campgroundRoutes = require("./routes/campgrounds");
+const reviewRoutes = require("./routes/reviews");
+const userRoutes = require("./routes/users");
 const session = require("express-session");
 const flash = require("connect-flash");
+//authentication packages:
+const passport = require("passport");
+const LocalStrategy = require("passport-local");
+const User = require("./models/user");
 
 /*-----------------------INITIAL SETUP----------------------*/
 
@@ -60,22 +65,48 @@ const sessionConfig = {
     maxAge: 1000 * 60 * 60 * 24 * 7,
   },
 };
-app.use(session(sessionConfig));
 
+//the session must be placed before passport session
+app.use(session(sessionConfig));
 app.use(flash());
 
+/////AUTHENTICATION
+app.use(passport.initialize());
+//allows persistent log-in session(via a cookie), usually
+app.use(passport.session());
+// for the localstrategy, the auth. method will be located in the User model (the method is added by default the passport-local-mongoose package)
+passport.use(new LocalStrategy(User.authenticate()));
+
+//serialization has to do with how we store/remove a user to a session
+//adds a isAuthenticated() property to the req object itself
+passport.serializeUser(User.serializeUser());
+passport.deserializeUser(User.deserializeUser());
+
+////LOCALS
 //works for every single request, needs to be placed before the routes
+//note that the locals property makes the value assigned to it be available to all templates that are rendered
 app.use((req, res, next) => {
   res.locals.success = req.flash("success");
   res.locals.error = req.flash("error");
-
+  //req.user is an object with current user info,
+  //provided by passport
+  res.locals.currentUser = req.user;
   next();
 });
 
 /*----------------------- ROUTES ----------------------*/
 
-app.use("/campgrounds", campgrounds);
-app.use("/campgrounds/:id/reviews", reviews);
+app.get("/fakeuser", async (req, res) => {
+  const user = new User({ email: "me@gmail.com", username: "me" });
+  //register meth also provded by pas-loc-mon;
+  //hashes the passwrd and save user to mongdb
+  const newuser = await User.register(user, "rabannette");
+  res.send(newuser);
+});
+
+app.use("/campgrounds", campgroundRoutes);
+app.use("/campgrounds/:id/reviews", reviewRoutes);
+app.use("/", userRoutes);
 
 app.get("/", (req, res) => {
   res.render("home");

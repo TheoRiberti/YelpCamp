@@ -5,6 +5,8 @@ const catchAsync = require("../utils/catchAsync");
 //our customized error class:
 const ExpressError = require("../utils/ExpressError");
 const Campground = require("../models/campground");
+//dont forget to destructure when importing stuff...
+const { isLoggedIn } = require("../middleware");
 //joi schema validation for using in the validateCamground mdware,
 const { campgroundSchema } = require("../schemas");
 
@@ -34,13 +36,14 @@ router.get(
 );
 
 //rest rout: new, add a new camp, only renders the form
-router.get("/new", (req, res) => {
+router.get("/new", isLoggedIn, (req, res) => {
   res.render("campgrounds/new");
 });
 
 //rest route: create, creates new camp
 router.post(
   "/",
+  isLoggedIn,
   validateCampground,
   catchAsync(async (req, res, next) => {
     const campground = new Campground(req.body.campground);
@@ -71,6 +74,7 @@ router.get(
 //rest route: edit, renders form to edit a camp
 router.get(
   "/:id/edit",
+  isLoggedIn,
   catchAsync(async (req, res) => {
     const { id } = req.params;
     const campground = await Campground.findById(id);
@@ -86,6 +90,7 @@ router.get(
 //rest route: update, updates specific camp to server
 router.put(
   "/:id",
+  isLoggedIn,
   validateCampground,
   catchAsync(async (req, res) => {
     const { id } = req.params;
@@ -100,6 +105,7 @@ router.put(
 //rest route: destroy, deletes specific camp to server
 router.delete(
   "/:id",
+  isLoggedIn,
   catchAsync(async (req, res) => {
     const { id } = req.params;
     const campground = await Campground.findByIdAndDelete(id);
