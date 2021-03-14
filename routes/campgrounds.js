@@ -3,6 +3,11 @@ const router = express.Router();
 const campgrounds = require("../controllers/campgrounds");
 const catchAsync = require("../utils/catchAsync");
 const { isLoggedIn, validateCampground, isAuthor } = require("../middleware");
+//no needs to specify index.js as node automatically looks for index.js in the folder
+const { storage } = require("../cloudinary");
+
+const multer = require("multer");
+const upload = multer({ storage });
 
 router
   .route("/")
@@ -11,6 +16,8 @@ router
   //creates new camp
   .post(
     isLoggedIn,
+    //for now we need to run multer midware before the validating as multer adds the stuff to the req.body that joi uses to validate
+    upload.array("image"),
     validateCampground,
     catchAsync(campgrounds.createCampground)
   );
@@ -26,6 +33,7 @@ router
   .put(
     isLoggedIn,
     isAuthor,
+    upload.array("image"),
     validateCampground,
     catchAsync(campgrounds.updateCampground)
   )

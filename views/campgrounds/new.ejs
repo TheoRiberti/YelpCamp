@@ -5,10 +5,15 @@
   <!-- offsets 3 cols, centering it -->
   <div class="col-6 offset-3">
     <!-- novalidate as using our own js and btstp to validate -->
-    <form class="validated-form" action="/campgrounds" method="POST" novalidate>
+    <form
+      class="validated-form"
+      action="/campgrounds"
+      method="POST"
+      novalidate
+      enctype="multipart/form-data"
+    >
       <div class="mb-3">
         <label class="form-label" for="title">Title</label>
-        <!-- the name using sq.br to only to group things together -->
         <input
           class="form-control"
           type="text"
@@ -30,7 +35,7 @@
         />
         <div class="valid-feedback">Looks good!</div>
       </div>
-      <div class="mb-3">
+      <!-- <div class="mb-3">
         <label class="form-label" for="image">Image Url</label>
         <input
           class="form-control"
@@ -40,7 +45,7 @@
           required
         />
         <div class="valid-feedback">Looks good!</div>
-      </div>
+      </div> -->
       <div class="mb-3">
         <label for="price" class="form-label">Campground Price</label>
         <div class="input-group">
@@ -67,10 +72,21 @@
         ></textarea>
         <div class="valid-feedback">Looks good!</div>
       </div>
-      <div class="mb-3">
-        <button class="btn btn-success">Add Campground</button>
+      <div class="mb-4">
+        <label for="" class="mb-2">Upload images</label>
+        <div class="input-group">
+          <input
+            type="file"
+            name="image"
+            class="form-control"
+            id="addimages"
+            multiple
+          />
+          <label class="input-group-text" for="addimage">Upload</label>
+        </div>
       </div>
-    </form>
-    <a href="/campgrounds">All Campgrounds</a>
+      <div class="mb-3">
+        <button type="submit" class="btn btn-success">Create Campground</button>
+      </div>
   </div>
 </div>
