@@ -4,11 +4,18 @@
 <% for (let camp of campgrounds) { %>
 <div class="card mb-3">
   <div class="row">
-    <% if (camp.images.length) { %>
     <div class="col-md-4">
+      <% if (camp.images.length) { %>
       <img class="img-fluid" src="<%= camp.images[0].url %>" alt="" />
+      <% } else { %>
+      <img
+        class="img-fluid"
+        src="https://res.cloudinary.com/ddlgml3yp/image/upload/v1615770701/YelpCamp/fomsfxpe7jm48vqqjdw3.jpg"
+        alt=""
+      />
+      <% } %>
     </div>
-    <% } %>
+
     <div class="col-md-8">
       <div class="card-body">
         <h5 class="card-title"><%= camp.title %></h5>
