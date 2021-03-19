@@ -1,0 +1,10 @@
+/*-----general stylesheet for unversal use - for simplicity sake for now ---*/
+#cluster-map {
+  width: 100%;
+  height: 500px;
+}
+
+#map {
+  width: 100%;
+  height: 300px;
+}
