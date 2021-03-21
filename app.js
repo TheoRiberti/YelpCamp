@@ -24,6 +24,11 @@ const flash = require("connect-flash");
 const passport = require("passport");
 const LocalStrategy = require("passport-local");
 const User = require("./models/user");
+const mongoSanitize = require("express-mongo-sanitize");
+const helmet = require("helmet");
+const {
+  dangerouslyDisableDefaultSrc,
+} = require("helmet/dist/middlewares/content-security-policy");
 
 /*-----------------------INITIAL SETUP----------------------*/
 
@@ -56,14 +61,25 @@ app.use(methodOverride("_method"));
 //allows serving public directory, public is the name of the folder cont. the assets
 app.use(express.static(path.join(__dirname, "public")));
 
+// To remove data, use:
+app.use(
+  mongoSanitize({
+    replaceWith: "_",
+  })
+);
+
 ///configuring sessions:
 const sessionConfig = {
+  //name of session can be altered to petentially confuse attacker, who'd look for id_session or something..
+  name: "session",
   secret: "pindamonhangaba",
   resave: false,
   saveUninitialized: true,
   cookie: {
     //helps prev. xss attacks, cookie cannot be read by client
     httpOnly: true,
+    //only works under https, localhost isn't https
+    //secure: true,
     //in ms
     expires: Date.now() + 1000 * 60 * 60 * 24 * 7,
     maxAge: 1000 * 60 * 60 * 24 * 7,
@@ -73,6 +89,55 @@ const sessionConfig = {
 //the session must be placed before passport session
 app.use(session(sessionConfig));
 app.use(flash());
+
+//automatically enables all the 11 helmet midwares
+app.use(helmet());
+
+///////helmet CSP confs:
+const scriptSrcUrls = [
+  "https://stackpath.bootstrapcdn.com/",
+  "https://api.tiles.mapbox.com/",
+  "https://api.mapbox.com/",
+  "https://kit.fontawesome.com/",
+  "https://cdnjs.cloudflare.com/",
+  "https://cdn.jsdelivr.net",
+];
+const styleSrcUrls = [
+  "https://kit-free.fontawesome.com/",
+  "https://stackpath.bootstrapcdn.com/",
+  "https://api.mapbox.com/",
+  "https://api.tiles.mapbox.com/",
+  "https://fonts.googleapis.com/",
+  "https://use.fontawesome.com/",
+  "https://cdn.jsdelivr.net",
+];
+const connectSrcUrls = [
+  "https://api.mapbox.com/",
+  "https://a.tiles.mapbox.com/",
+  "https://b.tiles.mapbox.com/",
+  "https://events.mapbox.com/",
+];
+const fontSrcUrls = [];
+app.use(
+  helmet.contentSecurityPolicy({
+    directives: {
+      defaultSrc: [],
+      connectSrc: ["'self'", ...connectSrcUrls],
+      scriptSrc: ["'unsafe-inline'", "'self'", ...scriptSrcUrls],
+      styleSrc: ["'self'", "'unsafe-inline'", ...styleSrcUrls],
+      workerSrc: ["'self'", "blob:"],
+      objectSrc: [],
+      imgSrc: [
+        "'self'",
+        "blob:",
+        "data:",
+        "https://res.cloudinary.com/ddlgml3yp/", //SHOULD MATCH YOUR CLOUDINARY ACCOUNT!
+        "https://images.unsplash.com/",
+      ],
+      fontSrc: ["'self'", ...fontSrcUrls],
+    },
+  })
+);
 
 /////AUTHENTICATION
 app.use(passport.initialize());
@@ -90,6 +155,7 @@ passport.deserializeUser(User.deserializeUser());
 //works for every single request, needs to be placed before the routes
 //note that the locals property makes the value assigned to it be available to all templates that are rendered
 app.use((req, res, next) => {
+  console.log(req.query);
   res.locals.success = req.flash("success");
   res.locals.error = req.flash("error");
   //req.user is an object with current user info,
